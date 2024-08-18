@@ -42,6 +42,7 @@ internal class AntiCheatForAll
             //     Logger.Warn($"玩家【{pc.GetClientId()}:{pc.GetRealName()}】未进入但发送RPC，无效！！！，已驳回", "ACFA");
             //     return true;
             // }
+            // haha ignored rpcs should be 5-8, 18, 38-43, but its still too buggy =D
             
             if (!Enum.IsDefined(typeof(RpcCalls), callId))
             {
@@ -472,11 +473,11 @@ internal class AntiCheatForAll
         
         if (systemType == SystemTypes.Sabotage) //使用正常的破坏按钮
         {
-            // if (GetPlayer.GetPlayerRoleTeam(player) != RoleTeam.Impostor)
-            // {
-                // Logger.Fatal($"玩家【{player.GetClientId()}:{player.GetRealName()}】非法破坏A，已驳回", "AntiCheatForAll");
-                // return true;
-            // }
+            if (GetPlayer.GetPlayerRoleTeam(player) != RoleTeam.Impostor)
+            {
+                Logger.Fatal($"玩家【{player.GetClientId()}:{player.GetRealName()}】非法破坏A，已驳回", "AntiCheatForAll");
+                return true;
+            }
         } //外挂直接发送 128 个系统型 rpc
         else if (systemType == SystemTypes.LifeSupp)
         {
