@@ -62,6 +62,7 @@ AmnotHostSafeSeeHacker: "<color=#1E90FF>{0}</color> 是外挂\n您不是房主 <
 AmnotHostUnSafeSeeHacker: "<color=#1E90FF>{0}</color> 是外挂\n您已开启<color=#1E90FF>[UnSafe]</color>模式 <color=#FFFF00>尝试<color=#FF4500>封禁</color>"
 AmHostSafeSeeHacker: "<color=#1E90FF>{0}</color> 是外挂\n您是房主 <color=#FFFF00>尝试<color=#FF0000>封禁</color>"
 SeeHacker: "<color=#1E90FF>{0}</color> 是外挂"
+SeeCloseDoorHacker: "<color=#1E90FF>{0}</color> 被外挂非法关门"
 ERROR.CHECKRPC: "[ERROR]可能有外挂或YuET问题！"
 OptImpMoreThanThree: "本房间设置最大内鬼数量大于3\n可能为外挂或其他模组房间！"
 OptHImpMoreThanThree: "本房间设置最大内鬼数量大于1\n可能为外挂或其他模组房间！"
@@ -235,6 +236,7 @@ CanNotJoinGame: "您当前选择了+25模式且启用了反作弊，无法通过
 EndMessage: "结算："
 game.endScreen.detail: "打开结算界面"
 game.endScreen.close: "关闭界面"
+KillCount: "击杀数："
 
 # 获胜原因
 HumansByVote: "伪装者被驱逐"
@@ -247,7 +249,7 @@ HumansDisconnect: "船员掉线了..."
 HideAndSeek_ByTimer: "倒计时结束"
 HideAndSeek_ByKills: "所有躲藏者被抓"
 CrewmateWin: "船员获胜"
-ImpostorWin: "伪装者获胜"
+ImpostorsWin: "伪装者获胜"
 NobodyWin: "无人获胜"
 ErrorWin: "异常获胜"
 

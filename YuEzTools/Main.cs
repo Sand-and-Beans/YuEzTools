@@ -53,6 +53,7 @@ public class Main : BasePlugin
     public static ConfigEntry<bool> PatchChat;
     public static ConfigEntry<bool> PatchCosmetics;
     public static ConfigEntry<bool> WinTextSize;
+    public static ConfigEntry<bool> SwitchVanilla;
     
     // ToDo: 自由选择是否开启游玩次数
     
@@ -102,7 +103,7 @@ public class Main : BasePlugin
         PlayerControl.AllPlayerControls.ToArray().Where(p => p != null);
     
     //public static Dictionary<int, PlayerState> PlayerStates = new Dictionary<int, PlayerState>();
-    
+    public static Dictionary<byte, string> DevNames = new Dictionary<byte, string>();
     public static ConfigEntry<string> BetaBuildURL { get; private set; }
     public override void Load()//加载 启动！
     {
@@ -132,7 +133,8 @@ public class Main : BasePlugin
         PatchChat = Config.Bind("Patches", "ChatPatches", true, "Enable chat-related patches");
         PatchCosmetics = Config.Bind("Patches", "CosmeticPatches", true, "Enable cosmetic-related patches");
         WinTextSize = Config.Bind("WinText", "WinTextSize", false, "The Winner big(true) or the reason big(false)");
-        
+        SwitchVanilla = Config.Bind("Client Options", "SwitchVanilla", false);
+
         menuUI = AddComponent<MenuUI>();
         
         //Translator.Init();

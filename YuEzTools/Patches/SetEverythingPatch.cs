@@ -111,6 +111,7 @@ class CoSetRolePatch
     public static void Postfix(PlayerControl __instance, [HarmonyArgument(0)] RoleTypes roleTypes)
     {
         __instance.SetRole(roleTypes);
+        if(roleTypes.GetRoleTeam() == RoleTeam.Impostor) __instance.SetImpostor();
     }
 }
 // Thanks Nebula on the Ship
@@ -222,6 +223,7 @@ class SetEverythingUpPatch
     public static string s = "";
     public static void Postfix(EndGameManager __instance)
     {
+        s = "";
         var BackgroundLayer = GameObject.Find("PoolablePlayer(Clone)");
         __instance.WinText.text = Toggles.WinTextSize ? 
             $"<size=50%>{GetString(EndGamePatch.WinTeam)}\n<size=30%>{GetString(EndGamePatch.WinReason)}</size>" : 
@@ -276,8 +278,6 @@ class SetEverythingUpPatch
             GetString("EndMessage")+
             s
         });
-        
-        s = "";
         Info(s,"EndSummary");
     }
 }
