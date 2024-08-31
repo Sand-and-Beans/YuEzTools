@@ -89,9 +89,24 @@ public static class Utils
 
     public static string GetKillOrTaskCountText(this byte id)
     {
-        var thisdata = ModPlayerData.GetModPlayerDataById(id);
+        var thisdata = id.GetPlayerDataById();
+        var text = "[ERROR]";
+        var color = Color.white;
         
-        return thisdata.pc.Data.Role.IsImpostor ? GetString("KillCount") + thisdata.KillCount.ToString() : $"{thisdata.TaskCount}/{PlayerControlSetTasksPatch.TaskCount}";
+        if (thisdata.IsImpostor)
+        {
+            text = GetString("KillCount") + thisdata.KillCount.ToString();
+            color = Color.red;
+        }
+        else
+        {
+            text = $"{thisdata.TaskCount}/{PlayerControlSetTasksPatch.TaskCount}";
+            color = thisdata.TaskCount == PlayerControlSetTasksPatch.TaskCount ? Color.green : (thisdata.TaskCount != 0 ? Color.yellow : Color.gray);
+        }
+
+        text = ColorString(color, text);
+        
+        return text;
     }
     //感谢FSX
     public static string SummaryTexts(byte id)
@@ -103,12 +118,12 @@ public static class Utils
         var longestNameByteCount = ModPlayerData.GetLongestNameByteCount();
 
 
-        var pos = Math.Min(((float)longestNameByteCount / 2) + 1.5f, 11.5f);
+        var pos = Math.Min(((float)longestNameByteCount / 2) + 3f, 11.5f);
         
         builder.Append(ColorString(thisdata.Color, thisdata.Name));
         
         builder.AppendFormat("<pos={0}em>", pos).Append(GetKillOrTaskCountText(id)).Append("</pos>");
-        pos += 7f;
+        pos += 8f;
 
         builder.AppendFormat("<pos={0}em>", pos).Append(GetDeadText(thisdata.pc)).Append("</pos>");
         pos += DestroyableSingleton<TranslationController>.Instance.currentLanguage.languageID == SupportedLangs.English ? 14f : 10.5f;
@@ -121,7 +136,7 @@ public static class Utils
 
         if (thisdata.IsDead && newrole != oldrole)
         {
-            builder.Append($"=> {ColorString(GetRoleColor32(newrole), GetRoleString($"{newrole}"))}");
+            builder.Append($" => {ColorString(GetRoleColor32(newrole), GetRoleString($"{newrole}"))}");
         }
         builder.Append("</pos>");
 
@@ -129,9 +144,10 @@ public static class Utils
     }
     public static bool HasTasks(this PlayerControl p)
     {
-        if (p.GetPlayerRoleTeam() != RoleTeam.Impostor) return true;
+        if (!p.IsImpostor()) return true;
         return false;
     }
+    
     public static void SendMessage(string text, byte sendTo = byte.MaxValue, string title = "<Default>", bool removeTags = false)
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -396,19 +412,31 @@ public static class Utils
             case GameOverReason.HumansByTask:
             case GameOverReason.HumansByVote:
             case GameOverReason.HideAndSeek_ByTimer:
+            case GameOverReason.ImpostorDisconnect:
                 return "CrewmateWin";
             case GameOverReason.ImpostorByKill:
             case GameOverReason.ImpostorBySabotage:
             case GameOverReason.HideAndSeek_ByKills:
             case GameOverReason.ImpostorByVote:
-                return "ImpostorsWin";
             case GameOverReason.HumansDisconnect:
-            case GameOverReason.ImpostorDisconnect:
-                return "NobodyWin";
+                return "ImpostorsWin";
         }
 
         return "ErrorWin";
     }
+    // public static void NotificationPop(string text)
+    // {
+    //     // if (!AmongUsClient.Instance.AmHost) return;
+    //     // foreach (var item in PlayerControl.AllPlayerControls)
+    //     // {
+    //         MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+    //             (byte)CustomRPC.NotificationPop, SendOption.Reliable,-1);
+    //         writer.Write(text);
+    //         // writer.WriteNetObject(item);
+    //         AmongUsClient.Instance.FinishRpcImmediately(writer);
+    //         NotificationPopperPatch.AddItem(text);
+    //     // }
+    // }
     public static Vector2 LocalPlayerLastTp;
     public static bool LocationLocked = false;
     public static void RpcTeleport(this PlayerControl player, Vector2 location)
@@ -507,7 +535,7 @@ public static class Utils
         }
     }
     public static string ColorString(Color32 color, string str) => $"<color=#{color.r:x2}{color.g:x2}{color.b:x2}{color.a:x2}>{str}</color>";
-
+    
     public static string getColoredFPSText(float fps)
     {
         string a = "";
@@ -610,6 +638,7 @@ public static class Utils
         return false;
     }
     private static readonly string BAN_LIST_PATH = @"./YuET_Data/BanList.txt";
+    private static readonly string BANWord_LIST_PATH = @"./YuET_Data/Banword.txt";
     public static bool CheckBanner(string code, string puid = "")
     {
         bool OnlyCheckPuid = false;
@@ -628,6 +657,103 @@ public static class Utils
             Directory.CreateDirectory("YuET_Data");
             if (!File.Exists(BAN_LIST_PATH)) File.Create(BAN_LIST_PATH).Close();
             using StreamReader sr = new(BAN_LIST_PATH);
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                if (line == "") continue;
+                if (!OnlyCheckPuid)
+                {
+                    if (line.IndexOf(code) >= 0) return true;
+                    if (!string.IsNullOrEmpty(noDiscrim) && !line.Contains('#') && line.Contains(noDiscrim)) return true;
+                }
+                if (line.Contains(puid)) return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Exception(ex, "CheckBanList");
+        }
+        return false;
+    }
+
+    public static bool CheckBanWord(this string s)
+    {
+        string noDiscrim = "";
+
+        try
+        {
+            Directory.CreateDirectory("YuET_Data");
+            if (!File.Exists(BANWord_LIST_PATH)) File.Create(BANWord_LIST_PATH).Close();
+            using StreamReader sr = new(BANWord_LIST_PATH);
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                if (line == "") continue;
+                if (s.Has(line)) return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Exception(ex, "CheckBanWordList");
+        }
+        return false;
+    }
+    public static void AddHacker(ClientData client)
+    {
+        if (client == null) return;
+        if (!CheckBanner(client.FriendCode,client?.ProductUserId))
+        {
+            if (client?.ProductUserId != "" && client?.ProductUserId != null)
+            {
+                var additionalInfo = "";
+                additionalInfo = $" //added by {Main.ModName}-YuAntiCheat";
+                File.AppendAllText(BAN_LIST_PATH, $"{client?.FriendCode},{client?.ProductUserId},{client.PlayerName.RemoveHtmlTags()}{additionalInfo}\n");
+                SendInGamePatch.SendInGame(string.Format(GetString("Message.AddedPlayerToBanList"), $"{client.PlayerName}"));
+            }
+            else Logger.Info($"Failed to add player {client?.PlayerName.RemoveHtmlTags()}/{client?.FriendCode}/{client?.ProductUserId} to ban list!", "AddBanPlayer");
+        }
+    }
+    public static bool CheckDllBanWord(this string s)
+    {
+        // string noDiscrim = "";
+
+        try
+        {
+            var stream = Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream("YuEzTools.Resources.Banword.txt");
+            stream.Position = 0;
+            using StreamReader sr = new(stream, Encoding.UTF8);
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                if (line == "") continue;
+                if (s.Has(line)) return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Exception(ex, "CheckBanWordList");
+        }
+        return false;
+    }
+    public static bool CheckCloudBanner(string code, string puid = "")
+    {
+        bool OnlyCheckPuid = false;
+        if (code == "" && puid != "") OnlyCheckPuid = true;
+        else if (code == "") return false;
+
+        string noDiscrim = "";
+        if (code.Contains('#'))
+        {
+            int index = code.IndexOf('#');
+            noDiscrim = code[..index];
+        }
+
+        try
+        {
+            // Directory.CreateDirectory("YuET_Data");
+            if (!File.Exists(Main.userProfile + "Banlist.txt")) File.Create(Main.userProfile + "Banlist.txt").Close();
+            using StreamReader sr = new(Main.userProfile + "Banlist.txt");
             string line;
             while ((line = sr.ReadLine()) != null)
             {

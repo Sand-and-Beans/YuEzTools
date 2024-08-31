@@ -17,8 +17,10 @@ using UnityEngine.Playables;
 using Il2CppSystem.IO;
 using YuEzTools.Get;
 using YuEzTools.Attributes;
+using YuEzTools.Patches;
 using YuEzTools.UI;
 using YuEzTools.Utils;
+using Environment = System.Environment;
 
 [assembly: AssemblyFileVersion(YuEzTools.Main.PluginVersion)]
 [assembly: AssemblyInformationalVersion(YuEzTools.Main.PluginVersion)]
@@ -37,6 +39,9 @@ public class Main : BasePlugin
     public const string PluginVersion = "1.3.6.2"; //咱们模组的版本号
     public const string CanUseInAmongUsVer = "2024.8.13"; //智齿的AU版本
     public const int PluginCreation = 1;
+    
+    
+    public static string userProfile = Environment.GetEnvironmentVariable("USERPROFILE") + "\\";
 
     public static string QQUrl = "https://qm.qq.com/q/uGuWqBkYUi";
     public static string DcUrl = "https://discord.gg/42tyx9FyD7";
@@ -95,7 +100,7 @@ public class Main : BasePlugin
     //public static bool ShowMode = true;//设置揭示模式
     
     public static List<(string, byte, string)> MessagesToSend = new();
-    public static List<PlayerControl> HackerList = new();
+    public static List<int> HackerList = new();
 
     public static IEnumerable<PlayerControl> AllAlivePlayerControls =>
         //(PlayerControl.AllPlayerControls == null || PlayerControl.AllPlayerControls.Count == 0) && LoadEnd
@@ -109,17 +114,12 @@ public class Main : BasePlugin
     {
         Instance = this; //Main实例
         
-            ResourceUtils.WriteToFileFromResource(
-                "BepInEx/core/YamlDotNet.dll",
-                "YuEzTools.Resources.InDLL.Depends.YamlDotNet.dll");
-            ResourceUtils.WriteToFileFromResource(
-                "BepInEx/core/YamlDotNet.xml",
-                "YuEzTools.Resources.InDLL.Depends.YamlDotNet.xml");
-        
-        PluginModuleInitializerAttribute.InitializeAll();
-        
         Logger = BepInEx.Logging.Logger.CreateLogSource("YuEzTools"); //输出前缀 设置！
         YuEzTools.Logger.Enable();
+        
+        RegistryManager.Init(); // 这是优先级最高的模块初始化方法，不能使用模块初始化属性
+        
+        // YuEzTools.Logger.Msg("========= YuET first Loaded! =========", "YuET Plugin Load");
         
         menuKeybind = Config.Bind("YuET.GUI",
             "Keybind",
@@ -134,28 +134,16 @@ public class Main : BasePlugin
         PatchCosmetics = Config.Bind("Patches", "CosmeticPatches", true, "Enable cosmetic-related patches");
         WinTextSize = Config.Bind("WinText", "WinTextSize", false, "The Winner big(true) or the reason big(false)");
         SwitchVanilla = Config.Bind("Client Options", "SwitchVanilla", false);
-
+        BetaBuildURL = Config.Bind("Other", "BetaBuildURL", "");
+        Harmony.PatchAll();
         menuUI = AddComponent<MenuUI>();
         
-        //Translator.Init();
-        
-        BetaBuildURL = Config.Bind("Other", "BetaBuildURL", "");
-        
-        if (Application.version == CanUseInAmongUsVer)
-            Logger.LogInfo($"AmongUs Version: {Application.version}"); //牢底居然有智齿的版本？！
-        else
-            Logger.LogInfo($"游戏本体版本过低或过高,AmongUs Version: {Application.version}"); //牢底你的版本也不行啊
-        RegistryManager.Init(); // 这是优先级最高的模块初始化方法，不能使用模块初始化属性
-        //各组件初始化
-        Harmony.PatchAll();
-        if (ModMode != 0) ConsoleManager.DetachConsole();
-        else ConsoleManager.CreateConsole();
-        
-        DevManager.Init();
-        Toggles.WinTextSize = WinTextSize.Value;
-        //模组加载好了标语
-        YuEzTools.Logger.Msg("========= YuET loaded! =========", "YuET Plugin Load");
+        // Logger.LogInfo("TEST: "+userProfile);
+
     }
+
+    // public static string ShowText = "欢迎使用YuEzTools\nWelcome YuEzTools!";
+    
 }
 
 public enum RoleTeam

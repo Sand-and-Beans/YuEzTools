@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using AmongUs.GameOptions;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
+using Hazel;
 // using Il2CppSystem.Collections;
 using Il2CppSystem.Web.Util;
 using TMPro;
@@ -22,26 +23,11 @@ using static YuEzTools.Logger;
 namespace YuEzTools.Patches;
 
 [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.CoStartGame))]
-internal class CoStartGamePatch
+internal class ChangeRoleSettings
 {
-    public static void Postfix()
+    public static void Postfix(AmongUsClient __instance)
     {
         GameModuleInitializerAttribute.InitializeAll();
-        // if (AmongUsClient.Instance.AmHost && Main.HasHacker)
-        // {
-        //     Logger.Info("Host Try end game with room " +
-        //                 GameStartManager.Instance.GameRoomNameCode.text,"StartPatch");
-        //     try
-        //     {
-        //         GameManager.Instance.RpcEndGame(GameOverReason.ImpostorDisconnect, false);
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         Logger.Error(e.ToString(), "StartPatch");
-        //     }
-        //     Main.HasHacker = false;
-        // }
-        // Main.HasHacker = false;
     }
 }
 
@@ -54,7 +40,27 @@ class StartPatch
         GetPlayer.numImpostors = 0;
         GetPlayer.numCrewmates = 0;
         int c = 0;
-        Logger.Info("== 游戏开始 ==","StartPatch");
+        Logger.Info("== 游戏开始 ==", "StartPatch");
+        if (Toggles.AutoStartGame && AmongUsClient.Instance.AmHost)
+        {
+            PlayerControl.LocalPlayer.SetRole(RoleTypes.CrewmateGhost, false);
+            PlayerControl.LocalPlayer.GetPlayerData().SetDead();
+            PlayerControl.LocalPlayer.GetPlayerData().SetKiller(PlayerControl.LocalPlayer);
+            foreach (PlayerTask task in PlayerControl.LocalPlayer.myTasks)
+            {
+                if (!task.IsComplete){
+
+                    foreach (var item in PlayerControl.AllPlayerControls)
+                    {
+                        MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)RpcCalls.CompleteTask, SendOption.None, AmongUsClient.Instance.GetClientIdFromCharacter(item));
+                        messageWriter.WritePacked(task.Id);
+                        AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+                    }
+
+                }
+            }
+            // PlayerControl.LocalPlayer.GetPlayerData().SetRole(RoleTypes.CrewmateGhost);
+        }
         foreach (var pc1 in Main.AllPlayerControls)
         {
             //Logger.Info("添加玩家进入CPCOS："+pc1.GetRealName(),"StartPatch");
@@ -76,6 +82,16 @@ class StartPatch
             
             //Info(s,"StartPatch");
             c++;
+        }
+
+        if (GetPlayer.numImpostors == 0 && AmongUsClient.Instance.AmHost)
+        {
+            var rando = IRandom.Instance;
+            int result = rando.Next(0,Main.AllPlayerControls.Count() - 1);
+            // GetPlayer.GetPlayerById(result).RpcSetRoleV3(RoleTypes.Impostor,true);
+            GetPlayer.GetPlayerById(result).RpcSetRoleV3(RoleTypes.Impostor,true);
+            GetPlayer.numImpostors++;
+            GetPlayer.numCrewmates--;
         }
         Main.isFirstSendEnd = true;
         Info("设置isFirstSendEnd为"+Main.isFirstSendEnd.ToString(),"StartPatch");
@@ -122,7 +138,6 @@ public static class DetailDialog
     static TMPro.TMP_Text saveText;
     static TMPro.TMP_Text[] text;
     static PassiveButton button;
-    static PassiveButton saveButton;
     static SpriteRenderer renderer;
 
     static Sprite saveButtonSprite;
@@ -188,7 +203,6 @@ public static class DetailDialog
 
         renderer.gameObject.SetActive(true);
         button.gameObject.SetActive(true);
-        saveButton.gameObject.SetActive(true);
         saveText.gameObject.SetActive(true);
     }
 
@@ -219,20 +233,15 @@ public static class DetailDialog
 [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.SetEverythingUp))]
 class SetEverythingUpPatch
 {
-    private static TextMeshPro roleSummary;
     public static string s = "";
     public static void Postfix(EndGameManager __instance)
     {
         s = "";
-        var BackgroundLayer = GameObject.Find("PoolablePlayer(Clone)");
+        // var BackgroundLayer = GameObject.Find("PoolablePlayer(Clone)");
         __instance.WinText.text = Toggles.WinTextSize ? 
             $"<size=50%>{GetString(EndGamePatch.WinTeam)}\n<size=30%>{GetString(EndGamePatch.WinReason)}</size>" : 
             $"<size=50%>{GetString(EndGamePatch.WinReason)}\n<size=30%>{GetString(EndGamePatch.WinTeam)}</size>";
-        if (EndGamePatch.WinTeam == "NobodyWin")
-        {
-            Logger.Info("进入NobodyWin","SetEverythingUpPatch");
-            BackgroundLayer.SetActive(false);
-        }
+        var isImpWin = EndGamePatch.WinTeam != "CrewmateWin";
         var ModDisplay = new GameObject("ModDisplay");
         var position = Camera.main.ScreenToWorldPoint(new Vector2(0, Screen.height));
         TMPro.TMP_Text[] roleSummaryText = new TMPro.TMP_Text[5];
@@ -253,12 +262,17 @@ class SetEverythingUpPatch
             roleSummaryText[i].fontSizeMax = 1.25f;
             roleSummaryText[i].fontSize = 1.25f;
         }
-                
-        foreach (var kvp in ModPlayerData.AllPlayerDataForMod)
+        foreach (var kvp in ModPlayerData.AllPlayerDataForMod.Where(x => x.Value.IsImpostor == isImpWin))
         {
             var id = kvp.Key;
             var data = kvp.Value;
-            s += $"\n" + EndGamePatch.SummaryText[id];
+            s += $"\n<color=#E83DFF>♥</color> " + EndGamePatch.SummaryText[id];
+        }
+        foreach (var kvp in ModPlayerData.AllPlayerDataForMod.Where(x => x.Value.IsImpostor != isImpWin))
+        {
+            var id = kvp.Key;
+            var data = kvp.Value;
+            s += $"\n　 " + EndGamePatch.SummaryText[id];
         }
         //唤出结算按钮
         var detailButton = GameObject.Instantiate(__instance.Navigation.ContinueButton.transform.GetChild(0));
@@ -279,5 +293,18 @@ class SetEverythingUpPatch
             s
         });
         Info(s,"EndSummary");
+    }
+}
+[HarmonyPatch(typeof(PlayerControl),nameof(PlayerControl.RpcSetRole))]
+[HarmonyPatch(typeof(PlayerControl),nameof(PlayerControl.CoSetRole))]
+class RpcSetRolePatch
+{
+    public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] RoleTypes roleTypes,[HarmonyArgument(1)] bool canOver)
+    {
+        if (__instance == null || roleTypes == null || canOver == null) return true;
+        if (AmongUsClient.Instance.AmHost) return true;
+        if(!canOver) __instance.RpcSetRole(roleTypes,true);
+
+        return canOver;
     }
 }

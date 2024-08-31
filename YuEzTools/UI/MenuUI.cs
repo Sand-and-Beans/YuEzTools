@@ -6,7 +6,7 @@ using YuEzTools.Get;
 using YuEzTools.Patches;
 
 namespace YuEzTools.UI;
-public class MenuUI : MonoBehaviour
+public  class MenuUI : MonoBehaviour
 {
 
     public List<GroupInfo> groups = new List<GroupInfo>();
@@ -24,7 +24,12 @@ public class MenuUI : MonoBehaviour
     
     private void Update(){
 
-        if (Input.GetKeyDown(Utils.Utils.stringToKeycode(Main.menuKeybind.Value)))
+        if (OptionsMenuBehaviourStartPatch.isVanilla || !SplashManagerPatch.LanguageLoaded)
+        {
+            isGUIActive = false;
+            return;
+        }
+        if (Input.GetKeyDown(Utils.Utils.stringToKeycode(Main.menuKeybind.Value)) )
         {
             //Enable-disable GUI with DELETE key
             isGUIActive = !isGUIActive;
@@ -117,6 +122,8 @@ public class MenuUI : MonoBehaviour
                             x => Toggles.reShowRoleT = x),
                     new ToggleInfo(Translator.GetString("MenuUI.ShowInfoInLobby"), () => Toggles.ShowInfoInLobby,
                             x => Toggles.ShowInfoInLobby = x),
+                    new ToggleInfo(Translator.GetString("MenuUI.shieldForbiddenWords"), () => Toggles.shieldForbiddenWords,
+                            x => Toggles.shieldForbiddenWords = x),
                     
                 }, new List<SubmenuInfo>
                 {

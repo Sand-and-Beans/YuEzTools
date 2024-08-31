@@ -10,8 +10,8 @@ TextBelowVersionText: "Yu"
 Retry: "重试"
 PleaseWait: "请稍候..."
 updateCheckPopupTitle: "更新检查"
-updateCheckFailedRetry: "检查更新失败\n要重试吗？"
-updateCheckFailedExit: "检查更新失败\n请检查您的网络后重试"
+updateCheckFailedRetry: "检查更新失败\n要重试吗？\n或者试试关掉你的加速器？"
+updateCheckFailedExit: "检查更新失败\n请检查您的网络后重试\n或者试试关掉你的加速器？"
 UpdateBySelfTitle: "更新提示"
 updateNotice: "更新提醒"
 UpdateBySelfText: "该版本不支持一键更新，请您手动更新"
@@ -39,10 +39,11 @@ updateSource.github: "GitHub"
 updateSource.discord: "Discord"
 
 # 聊天
-SuspectedViolationMessage: "疑似违规信息"
+SuspectedViolationMessage: "疑似敏感信息"
 MessgaeFromYuET: "== 信息来自YuET模组 =="
 DefaultSystemMessageTitle: "[YuET消息]"
 Message.Welcome: "我采用了YuEzTools模组\n本房间是在{0}服务器运行的，房间号为{1}\n这不是普通的AmongUs游戏\n祝你游玩愉快，[YuET]持续保护中"
+ShieldSuspectedViolationMessage: "该信息触发了敏感词汇，为保证您的游戏体验，我们已将其屏蔽\n<size=60%>如需查看可前往日志进行查看内容</size>"
 
 # 进入/退出房间
 JoinRoom: "加入房间"
@@ -73,6 +74,11 @@ unKickNotLogin: "未登录\n请注意，几乎所有的外挂都是未登录！"
 BlackList: "存在于您或YuET的黑名单中"
 notFindRPC: "这是无效的RPC！\n数值：{0}"
 notJoinedSendRPC: "{1}未进入却发送了RPC\n数值：{0}"
+SendBadChat: "{0} 发送了违规信息\n已尝试屏蔽..."
+Message.AddedPlayerToBanList: "已将玩家 {0} 添加至您的本地封禁名单"
+KickHostByAUSystem: "AmongUs尝试对房主进行 {0} 操作\n我们尝试拦截..."
+BanText: "封禁"
+KickText: "踢出"
 
 # MenuUI.Interface
 Interface: "界面"
@@ -118,6 +124,7 @@ MenuUI.HorseMode: "马模式"
 MenuUI.LongMode: "长颈鹿模式"
 MenuUI.reShowRoleT: "重新展示职业"
 MenuUI.ShowInfoInLobby: "在大厅显示玩家的基本信息"
+MenuUI.shieldForbiddenWords: "屏蔽违规聊天"
 
 # MenuUI.ShortcutButton.Left
 MenuUI.ShortcutButton.Left: "退出游戏选项卡"
@@ -234,8 +241,8 @@ CanNotJoinGame: "您当前选择了+25模式且启用了反作弊，无法通过
 
 # 结算
 EndMessage: "结算："
-game.endScreen.detail: "打开结算界面"
-game.endScreen.close: "关闭界面"
+game.endScreen.detail: "查看结算"
+game.endScreen.close: "关闭"
 KillCount: "击杀数："
 
 # 获胜原因
@@ -250,8 +257,41 @@ HideAndSeek_ByTimer: "倒计时结束"
 HideAndSeek_ByKills: "所有躲藏者被抓"
 CrewmateWin: "船员获胜"
 ImpostorsWin: "伪装者获胜"
-NobodyWin: "无人获胜"
 ErrorWin: "异常获胜"
 
 # 任务栏
 PressF3ToShowYourRoleInfo: "按下F3以显示职业介绍和设置"
+
+# Options
+YuETOptions: "YuET设置"
+Options.Back: "返回设置"
+SwitchVanilla: "切换为原版"
+
+# 加载界面
+WelcomeToUseYuET: "欢迎使用YuET！"
+
+# 下载Banlist
+DownloadBanlistFailedTitle: "错误！"
+DownloadBanlistFailed: "下载封禁名单时错误了，您的游戏安全等级下降\n原因：{0}\n请检查您的网络并尽快反馈给开发者"
+
+# 8ball
+8BallTitle: "神奇 8 号球揭示..."
+8BallYes: "是"
+8BallNo: "否"
+8BallMaybe: "也许"
+8BallTryAgainLater: "稍后再问"
+8BallCertain: "可以肯定的是"
+8BallNotLikely: "展望不太好"
+8BallLikely: "展望良好"
+8BallDontCount: "不要指望它"
+8BallStop: "请不要在Among Us中...使用8号球"
+8BallPossibly: "可能"
+8BallProbably: "可能是"
+8BallProbablyNot: "可能不是"
+8BallBetterNotTell: "现在最好不要告诉你"
+8BallCantPredict: "现在无法预测"
+8BallWithoutDoubt: "毫无疑问"
+8BallWithDoubt: "非常怀疑"
+EightBallTitle: "神奇 8 号球..."
+EightBallText: "请<color=#3DFFD7><size=4>大声</size></color>喊出您的问题，稍后按下确认按钮..."
+EightBallButton: "8号球"

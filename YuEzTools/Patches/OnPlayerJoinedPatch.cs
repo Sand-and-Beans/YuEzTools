@@ -8,6 +8,7 @@ using YuEzTools.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AmongUs.GameOptions;
 using YuEzTools.Modules;
 using static YuEzTools.Translator;
 using Exception = Il2CppSystem.Exception;
@@ -44,9 +45,12 @@ class OnPlayerJoinedPatch
         }
         DestroyableSingleton<HudManager>.Instance.Chat.AddChat(PlayerControl.LocalPlayer, $"<color=#1E90FF>{client.PlayerName}</color> <color=#00FF7F>{Translator.GetString("JoinRoom")}</color>");
         SendInGamePatch.SendInGame($"<color=#1E90FF>{client.PlayerName}</color> <color=#00FF7F>{Translator.GetString("JoinRoom")}</color>");
+
+        if (GetPlayer.IsLocalGame || client.FriendCode.IsDevUsers()) return;
         if (AmongUsClient.Instance.AmHost && client.FriendCode == "" && Toggles.KickNotLogin)
         {
             // 你知道的 Login是这样的
+            // client.Character.RpcSetName($"<color=#DC143C>{client.PlayerName}</color> <color=#EE82EE>{Translator.GetString("NotLogin")}</color>");
             AmongUsClient.Instance.KickPlayer(client.Id, true);
             Logger.Info($"{client?.PlayerName}未登录 已踢出", "Kick");
             DestroyableSingleton<HudManager>.Instance.Chat.AddChat(PlayerControl.LocalPlayer, $"<color=#DC143C>{client.PlayerName}</color> <color=#EE82EE>{Translator.GetString("NotLogin")}</color>");
@@ -59,9 +63,13 @@ class OnPlayerJoinedPatch
             SendInGamePatch.SendInGame($"<color=#DC143C>{client.PlayerName}</color> <color=#EE82EE>{Translator.GetString("unKickNotLogin")}</color>");
         }
 
-        if (Utils.Utils.CheckBanList(client.FriendCode,client?.ProductUserId) || Utils.Utils.CheckBanner(client.FriendCode,client?.ProductUserId) || Utils.Utils.CheckFirstBanList(client.FriendCode))
+        if (Utils.Utils.CheckBanList(client.FriendCode,client?.ProductUserId) || Utils.Utils.CheckBanner(client.FriendCode,client?.ProductUserId)|| Utils.Utils.CheckCloudBanner(client.FriendCode,client?.ProductUserId) || Utils.Utils.CheckFirstBanList(client.FriendCode))
         {
-            if(AmongUsClient.Instance.AmHost) AmongUsClient.Instance.KickPlayer(client.Id, true);
+            if (AmongUsClient.Instance.AmHost)
+            {
+                // client.Character.RpcSetName($"<color=#DC143C>{client.PlayerName}</color> <color=#EE82EE>{Translator.GetString("BlackList")}</color>");
+                AmongUsClient.Instance.KickPlayer(client.Id, true);
+            }
             Logger.Info($"{client?.PlayerName}黑名单 已揭示/踢出", "OnPlayerJoined");
             DestroyableSingleton<HudManager>.Instance.Chat.AddChat(PlayerControl.LocalPlayer, $"<color=#DC143C>{client.PlayerName}</color> <color=#EE82EE>{Translator.GetString("BlackList")}</color>");
             SendInGamePatch.SendInGame($"<color=#DC143C>{client.PlayerName}</color> <color=#EE82EE>{Translator.GetString("BlackList")}</color>");
@@ -97,12 +105,7 @@ class OnPlayerLeftPatch{
 [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnGameJoined))]
 class OnGameJoined
 {
-    //private static int CID;
-    // public static void Prefix(AmongUsClient __instance)
-    // {
-    //     if (AmongUsClient.Instance.AmHost && Toggles.AutoStartGame)
-    //         MurderHacker.murderHacker(PlayerControl.LocalPlayer, MurderResultFlags.Succeeded);
-    // }
+    private static int CID;
     public static void Postfix(AmongUsClient __instance, [HarmonyArgument(0)] ClientData client)
     {
         ShowDisconnectPopupPatch.ReasonByHost = string.Empty;
@@ -115,29 +118,7 @@ class IntroCutscenePatch
     [HarmonyPatch(nameof(IntroCutscene.OnDestroy)), HarmonyPostfix]
     public static void OnDestroy_Postfix(IntroCutscene __instance)
     {
-        if (Toggles.AutoStartGame && AmongUsClient.Instance.AmHost)
-        {
-            PlayerControl.LocalPlayer.RpcTeleport(Utils.Utils.GetBlackRoomPS());
-            Logger.Info("尝试TP玩家","GM");
-            //PlayerControl.LocalPlayer.RpcExile();
-            MurderHacker.murderHacker(PlayerControl.LocalPlayer,MurderResultFlags.Succeeded);
-            Logger.Info("尝试击杀玩家","GM");
-            // PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SetDead();
-            if (AmongUsClient.Instance.AmHost && Main.HasHacker)
-            {
-                Logger.Info("Host Try end game with room " +
-                            GameStartManager.Instance.GameRoomNameCode.text,"StartPatch");
-                try
-                {
-                    GameManager.Instance.RpcEndGame(GameOverReason.ImpostorDisconnect, false);
-                }
-                catch (System.Exception e)
-                {
-                    Logger.Error(e.ToString(), "StartPatch");
-                }
-                Main.HasHacker = false;
-            }
-        }
+
     }
 }
 [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.DisconnectInternal))]

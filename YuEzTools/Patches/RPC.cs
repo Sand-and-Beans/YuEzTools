@@ -4,6 +4,7 @@ using HarmonyLib;
 using YuEzTools.Get;
 using YuEzTools.Modules;
 using YuEzTools.Patches;
+using YuEzTools.Utils;
 
 namespace YuEzTools;
 
@@ -17,19 +18,31 @@ internal class RPCHandlerPatch
         if (!Toggles.EnableAntiCheat) return true;
         try
         {
+            if((callId == 13 || (RpcCalls)callId == RpcCalls.SendChat) && Toggles.shieldForbiddenWords)
+            {
+                MessageReader sr = MessageReader.Get(reader);
+                var text = sr.ReadString();
+                if (text.CheckBanWord() || text.CheckDllBanWord())
+                {
+                    Main.Logger.LogWarning($"玩家【{__instance.GetClientId()}:{__instance.GetRealName()}】发送非法消息，已驳回");
+                    SendBadChat.Prefix(__instance);
+                    return false;
+                }
+            }
+            
             if (AntiCheatForAll.ReceiveRpc(__instance, callId, reader) || AUMCheat.ReceiveInvalidRpc(__instance, callId,reader) ||
                 SMCheat.ReceiveInvalidRpc(__instance, callId))
             {
-                if(!Main.HackerList.Contains(__instance)) Main.HackerList.Add(__instance);
+                if(!Main.HackerList.Contains(__instance.GetClientId())) Main.HackerList.Add(__instance.GetClientId());
                 Main.HasHacker = true;
                 Logger.Fatal("Hacker " + __instance.GetRealName() + $"{"好友编号："+__instance.GetClient().FriendCode+"/名字："+__instance.GetRealName()+"/ProductUserId："+__instance.GetClient().ProductUserId}","RPCHandle");
                 //Main.PlayerStates[__instance.GetClient().Id].IsHacker = true;
                 SendChat.Prefix(__instance);
+                Utils.Utils.AddHacker(__instance.GetClient());
                 if(!Toggles.SafeMode && !AmongUsClient.Instance.AmHost && GameStartManagerPatch.roomMode == RoomMode.Plus25)
                 {
                     Main.Logger.LogInfo("Try Kick" + __instance.GetRealName());
                     KickHackerPatch.KickPlayer(__instance);
-     
                     return false;
                 }
                 //PlayerControl Host = AmongUsClient.Instance.GetHost();

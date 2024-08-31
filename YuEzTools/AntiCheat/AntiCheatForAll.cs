@@ -120,7 +120,10 @@ internal class AntiCheatForAll
                         return true;
                     }
                     break;
-                
+                case RpcCalls.SnapTo:
+                    Logger.Warn($"违规！{pc.GetRealName()} 进行了违规的传送...","AntiCheatForAll");
+                    return true;
+                    break;
                 case RpcCalls.SetRole:
                     var role = (RoleTypes)sr.ReadUInt16();
                     var canOverrideRole = sr.ReadBoolean();
@@ -136,29 +139,6 @@ internal class AntiCheatForAll
                     if (GetPlayer.IsInGame && !GetPlayer.IsMeeting && !pc.Data.IsDead)
                     {
                         Main.Logger.LogWarning($"玩家【{pc.GetClientId()}:{pc.GetRealName()}】非法聊天，已驳回");
-                        return true;
-                    }
-                    if (
-                        text.Contains("░") ||
-                        text.Contains("▄") ||
-                        text.Contains("█") ||
-                        text.Contains("▌") ||
-                        text.Contains("▒") ||
-                        text.Contains("习近平") ||
-                        text.Contains("毛泽东") ||
-                        text.Contains("周恩来") ||
-                        text.Contains("邓小平") ||
-                        text.Contains("江泽民") ||
-                        text.Contains("胡锦涛") ||
-                        text.Contains("温家宝") ||
-                        text.Contains("台湾") || 
-                        text.Contains("台独") || 
-                        text.Contains("共产党") || // 游戏名字屏蔽词
-                        text.IndexOf("EzHacked", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        text.IndexOf("Ez Hacked", StringComparison.OrdinalIgnoreCase) >= 0
-                    )
-                    {
-                        Main.Logger.LogWarning($"玩家【{pc.GetClientId()}:{pc.GetRealName()}】发送非法消息，已驳回");
                         return true;
                     }
                     break;
@@ -222,12 +202,13 @@ internal class AntiCheatForAll
                 
                 case RpcCalls.MurderPlayer:
                 case RpcCalls.CheckMurder:
+                    // if (Toggles.AutoStartGame && pc == PlayerControl.LocalPlayer) return false;
                     var id = sr.ReadByte();
                     if ( GetPlayer.IsLobby || pc.Data.IsDead || (pc.Data.RoleType != RoleTypes.Impostor && pc.Data.RoleType != RoleTypes.Shapeshifter && pc.Data.RoleType != RoleTypes.Phantom))
                     {
                         if (AmongUsClient.Instance.AmHost && !Toggles.SafeMode)
                         {
-                            id.GetPlayerDataById().pc.Revive();
+                            GetPlayer.GetPlayerById(id).Revive();
                             if(GetPlayer.IsLobby) GetPlayer.GetPlayerById(id).RpcSetRole(RoleTypes.Crewmate,true);
                             
                             Main.Logger.LogWarning($"尝试复活{id.GetPlayerDataById().pc.GetRealName()}");
@@ -287,6 +268,7 @@ internal class AntiCheatForAll
             switch (callId)
             {
                 case 13:
+                    // if (Toggles.AutoStartGame && pc == PlayerControl.LocalPlayer) return false;
                     if (GetPlayer.IsInGame && !GetPlayer.IsMeeting && !pc.Data.IsDead)
                     {
                         Main.Logger.LogWarning($"玩家【{pc.GetClientId()}:{pc.GetRealName()}】非法聊天，已驳回");
@@ -303,7 +285,10 @@ internal class AntiCheatForAll
                         return true;
                     }
                     break;
-
+                case 21:
+                    Logger.Warn($"违规！{pc.GetRealName()} 进行了违规的传送...","AntiCheatForAll");
+                    return true;
+                    break;
                 case 11:
                     MeetingTimes++;
                     if (GetPlayer.IsLobby  || GetPlayer.isHideNSeek)

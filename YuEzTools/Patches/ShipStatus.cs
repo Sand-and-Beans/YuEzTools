@@ -18,9 +18,10 @@ public static class ShipStatus_FixedUpdate
     {
         if (!Toggles.EnableAntiCheat) return true;
         var amount = MessageReader.Get(reader).ReadByte();
-        if (AntiCheatForAll.RpcUpdateSystemCheck(player, systemType, amount)  || (GetPlayer.IsHideNSeek && AntiCheatForAll.RpcUpdateSystemCheckFHS(player, systemType, amount)))
+        if (AntiCheatForAll.RpcUpdateSystemCheck(player, systemType, amount)  || (GetPlayer.IsHideNSeek && AntiCheatForAll.RpcUpdateSystemCheckFHS(player, systemType, amount)) || GetPlayer.isMeeting)
         {
-            if(!Main.HackerList.Contains(player)) Main.HackerList.Add(player);
+            __instance.RpcUpdateSystem(systemType, 16);
+            if(!Main.HackerList.Contains(player.GetClientId())) Main.HackerList.Add(player.GetClientId());
             Logger.Info("AC 破坏 RPC", "MessageReaderUpdateSystemPatch");
             Main.Logger.LogInfo("Hacker " + player.GetRealName() + $"{"好友编号："+player.GetClient().FriendCode+"/名字："+player.GetRealName()+"/ProductUserId："+player.GetClient().ProductUserId}");
             //Main.PlayerStates[__instance.GetClient().Id].IsHacker = true;
@@ -50,7 +51,6 @@ public static class ShipStatus_FixedUpdate
             }
             return false;
         }
-        __instance.RpcUpdateSystem(systemType, 16);
         return RepairSystemPatch.Prefix(__instance, systemType, player, amount);
     }
 }
